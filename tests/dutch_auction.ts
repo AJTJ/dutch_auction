@@ -25,6 +25,11 @@ describe("dutch_auction", () => {
   });
 
   it("It initializes the account and creates an auction!", async () => {
+    const [mint, mintBump] = await anchor.web3.PublicKey.findProgramAddress(
+      [],
+      program.programId
+    );
+
     // Dec 12th, 2021
     let start_time = new anchor.BN(1639341245);
     // January first, 2022
@@ -42,9 +47,12 @@ describe("dutch_auction", () => {
       reserve_price,
       {
         accounts: {
+          mint: mint,
           auction: auction.publicKey,
           user: providerWallet.publicKey,
           systemProgram: SystemProgram.programId,
+          tokenProgram: spl.TOKEN_PROGRAM_ID,
+          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         },
         signers: [auction],
       }
