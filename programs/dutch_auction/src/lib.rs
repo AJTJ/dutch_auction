@@ -9,19 +9,25 @@ fn get_slope(
     reserve_price: Option<i64>,
     end_time: i64,
 ) -> (i64, i64) {
-    let num = reserve_price.or(Some(0)).unwrap() - start_price;
-    let den = end_time - start_time;
+    let num = (reserve_price.or(Some(0)).unwrap())
+        .checked_sub(start_price)
+        .unwrap();
+    let den = end_time.checked_sub(start_time).unwrap();
     (num, den)
 }
 
 fn get_y_intercept(start_price: i64, start_time: i64, slope_num: i64, slope_den: i64) -> i64 {
-    let slope_start_time = ((slope_num as i128 * start_time as i128) as i64) / slope_den;
-    start_price - slope_start_time
+    let slope_start_time = (((slope_num as i128).checked_mul(start_time as i128).unwrap()) as i64)
+        .checked_div(slope_den)
+        .unwrap();
+    start_price.checked_sub(slope_start_time).unwrap()
 }
 
 fn get_current_price(current_time: i64, y_intercept: i64, slope_num: i64, slope_den: i64) -> u64 {
-    let res = (slope_num as i128 * current_time as i128) as i64 / slope_den;
-    (res).checked_add(y_intercept).unwrap() as u64
+    let slope_cur_time = (((slope_num as i128).checked_mul(start_time as i128).unwrap()) as i64)
+        .checked_div(slope_den)
+        .unwrap();
+    (slope_cur_time).checked_add(y_intercept).unwrap() as u64
 }
 
 #[program]
@@ -83,8 +89,6 @@ pub mod dutch_auction {
                     auction.slope_num,
                     auction.slope_den,
                 );
-
-                // let current_price_lamps = get_lamports_from_sol(current_price_sol);
 
                 solana_program::program::invoke(
                     &solana_program::system_instruction::transfer(
