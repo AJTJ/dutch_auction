@@ -1,5 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program;
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::{Mint, Token, TokenAccount},
+};
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
@@ -124,6 +128,23 @@ pub struct Create<'info> {
 
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
+
+    #[account(
+        init,
+        payer = user,
+        seeds = [],
+        bump = mint_bump,
+        mint::decimals = 0,
+        mint::authority = mint
+    )]
+    pub mint: Account<'info, Mint>,
+
+    #[account(init_if_needed, payer = user, associated_token::mint = mint, associated_token::authority = payer)]
+    pub destination: Account<'info, TokenAccount>,
+
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub rent: Sysvar<'info, Rent>,
 }
 #[derive(Accounts)]
 pub struct Claim<'info> {
