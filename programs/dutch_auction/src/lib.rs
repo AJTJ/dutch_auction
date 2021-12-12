@@ -1,5 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program;
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::{Mint, Token, TokenAccount},
+};
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
@@ -65,7 +69,6 @@ pub mod dutch_auction {
     pub fn claim(ctx: Context<Claim>) -> ProgramResult {
         // NOTES FOR PROD
         // - This is not proper escrow software, and is probably currently unsafe
-        // - Currently the purchasing account is just paying to end the auction. Transferring ownership of a some token or whatnot should be fairly trivial.
 
         let auction = &mut ctx.accounts.auction;
         let authority = &mut ctx.accounts.authority;
@@ -84,7 +87,7 @@ pub mod dutch_auction {
                 msg!("auction is ended");
                 Ok(())
             } else {
-                // attempt all fund transfers and then end the auction
+                // get the current price
                 let current_price = get_current_price(
                     current_timestamp,
                     auction.y_intercept,
@@ -92,6 +95,7 @@ pub mod dutch_auction {
                     auction.slope_den,
                 );
 
+                // attempt to transfer all the funds
                 solana_program::program::invoke(
                     &solana_program::system_instruction::transfer(
                         purchaser.to_account_info().key,
@@ -114,9 +118,11 @@ pub mod dutch_auction {
 }
 
 #[derive(Accounts)]
+#[instruction(mint_bump: u8)]
 pub struct Create<'info> {
     #[account(init, payer = user, space = 64 + 64)]
     pub auction: Account<'info, Auction>,
+
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
 }

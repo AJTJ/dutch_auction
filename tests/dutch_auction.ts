@@ -25,7 +25,7 @@ describe("dutch_auction", () => {
   });
 
   it("It initializes the account and creates an auction!", async () => {
-    // Dec 10th, 2021
+    // Dec 12th, 2021
     let start_time = new anchor.BN(1639341245);
     // January first, 2022
     let end_time = new anchor.BN(1641094445);
