@@ -28,8 +28,8 @@ describe("dutch_auction", () => {
     let start_time = new anchor.BN(1639341245);
     // January first, 2022
     let end_time = new anchor.BN(1641094445);
-    // start price is in SOL
-    let start_price = new anchor.BN(100);
+    // start price is in LAMPORTS
+    let start_price = new anchor.BN(1000);
     // Optional reserve_price
     let reserve_price = null;
 

@@ -6,35 +6,25 @@ use anchor_lang::solana_program;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
-const DECIMAL_MOVEMENT: f64 = 10_000_000_000_000.0;
-
-fn get_slope(start_price: i64, start_time: i64, reserve_price: Option<i64>, end_time: i64) -> i64 {
-    println!("end: {}, start: {}", end_time, start_time);
-    let top = reserve_price.or(Some(0)).unwrap() - start_price;
-    println!("top {}", top);
-    let bottom = end_time - start_time;
-    ((top as f64 / bottom as f64) * DECIMAL_MOVEMENT).round() as i64
+fn get_slope(
+    start_price: i64,
+    start_time: i64,
+    reserve_price: Option<i64>,
+    end_time: i64,
+) -> (i64, i64) {
+    let num = reserve_price.or(Some(0)).unwrap() - start_price;
+    let den = end_time - start_time;
+    (num, den)
 }
 
-fn get_y_intercept(start_price: i64, start_time: i64, slope: i64) -> i64 {
-    let slopef64 = slope as f64 / DECIMAL_MOVEMENT;
-    let slope_start_time = slopef64 * start_time as f64;
-    println!("slope * start time: {}", slope_start_time);
-
-    ((start_price as f64 - slope_start_time) * DECIMAL_MOVEMENT).round() as i64
+fn get_y_intercept(start_price: i64, start_time: i64, slope_num: i64, slope_den: i64) -> i64 {
+    let slope_start_time = ((slope_num as i128 * start_time as i128) as i64) / slope_den;
+    start_price - slope_start_time
 }
 
-fn get_current_price_as_i64(current_time: i64, slope: i64, y_intercept: i64) -> i64 {
-    let slopef64 = slope as f64 / DECIMAL_MOVEMENT;
-    let y_interf64 = y_intercept as f64 / DECIMAL_MOVEMENT;
-    let res = slopef64 * current_time as f64;
-    println!("the res: {}", res);
-    ((res + y_interf64) * DECIMAL_MOVEMENT).round() as i64
-}
-
-fn get_lamports_from_sol(cur_sol: i64) -> u64 {
-    let cur_solf64 = cur_sol as f64 / DECIMAL_MOVEMENT;
-    (cur_solf64 * 1_000_000_000.0).round() as u64
+fn get_current_price(current_time: i64, y_intercept: i64, slope_num: i64, slope_den: i64) -> u64 {
+    let res = (slope_num as i128 * current_time as i128) as i64 / slope_den;
+    (res).checked_add(y_intercept).unwrap() as u64
 }
 
 #[program]
@@ -58,10 +48,11 @@ pub mod dutch_auction {
         auction.reserve_price = reserve_price;
         auction.is_ended = false;
 
-        let slope = get_slope(start_price, start_time, reserve_price, end_time);
-        let y_intercept = get_y_intercept(start_price, start_time, slope);
+        let (num, den) = get_slope(start_price, start_time, reserve_price, end_time);
+        let y_intercept = get_y_intercept(start_price, start_time, num, den);
 
-        auction.slope = slope;
+        auction.slope_num = num;
+        auction.slope_den = den;
         auction.y_intercept = y_intercept;
         Ok(())
     }
@@ -69,7 +60,7 @@ pub mod dutch_auction {
     pub fn claim(ctx: Context<Claim>) -> ProgramResult {
         // NOTES FOR PROD
         // - This is not proper escrow software
-        // - Currently the purchasing account is just paying to end the auction. Transferring ownership of a some token or whatnot should be trivial.
+        // - Currently the purchasing account is just paying to end the auction. Transferring ownership of a some token or whatnot should be fairly trivial.
 
         let auction = &mut ctx.accounts.auction;
         let authority = &mut ctx.accounts.authority;
@@ -89,16 +80,20 @@ pub mod dutch_auction {
                 Ok(())
             } else {
                 // attempt all fund transfers and then end the auction
-                let current_price_sol =
-                    get_current_price_as_i64(current_timestamp, auction.slope, auction.y_intercept);
+                let current_price = get_current_price(
+                    current_timestamp,
+                    auction.y_intercept,
+                    auction.slope_num,
+                    auction.slope_den,
+                );
 
-                let current_price_lamps = get_lamports_from_sol(current_price_sol);
+                // let current_price_lamps = get_lamports_from_sol(current_price_sol);
 
                 solana_program::program::invoke(
                     &solana_program::system_instruction::transfer(
                         purchaser.to_account_info().key,
                         authority.to_account_info().key,
-                        current_price_lamps,
+                        current_price,
                     ),
                     &[
                         purchaser.to_account_info(),
@@ -145,7 +140,8 @@ pub struct Auction {
     pub start_price: i64,
     pub reserve_price: Option<i64>,
     // math values (should only be positive)
-    pub slope: i64,
+    pub slope_num: i64,
+    pub slope_den: i64,
     pub y_intercept: i64,
     // other
     pub is_ended: bool,
