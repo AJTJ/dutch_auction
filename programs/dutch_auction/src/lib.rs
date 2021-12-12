@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program;
 // use anchor_spl::token::accessor::authority;
 // use anchor_spl::associated_token::AssociatedToken;
 // use anchor_spl::token::{self, set_authority, Mint, SetAuthority, Token, TokenAccount, Transfer};
@@ -93,8 +94,8 @@ pub mod dutch_auction {
 
                 let current_price_lamps = get_lamports_from_sol(current_price_sol);
 
-                anchor_lang::solana_program::program::invoke(
-                    &anchor_lang::solana_program::system_instruction::transfer(
+                solana_program::program::invoke(
+                    &solana_program::system_instruction::transfer(
                         purchaser.to_account_info().key,
                         authority.to_account_info().key,
                         current_price_lamps,
