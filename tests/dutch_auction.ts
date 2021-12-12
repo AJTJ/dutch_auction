@@ -25,10 +25,12 @@ describe("dutch_auction", () => {
 
   it("It initializes the account and creates an auction!", async () => {
     // Dec 10th, 2021
-    let start_time = new anchor.BN(1639181611);
+    let start_time = new anchor.BN(1639341245);
     // January first, 2022
-    let end_time = new anchor.BN(1641021206);
+    let end_time = new anchor.BN(1641094445);
+    // start price is in SOL
     let start_price = new anchor.BN(100);
+    // Optional reserve_price
     let reserve_price = null;
 
     let tx = await program.rpc.initialize(
@@ -56,16 +58,24 @@ describe("dutch_auction", () => {
     );
 
     assert.ok(account_before.isEnded === false);
+    console.log(
+      "balance before",
+      await provider.connection.getBalance(newUser.publicKey)
+    );
 
     let tx = await program.rpc.claim({
       accounts: {
         auction: auction.publicKey,
         authority: providerWallet.publicKey,
         purchaser: newUser.publicKey,
+        systemProgram: SystemProgram.programId,
       },
       signers: [newUser],
     });
-
+    console.log(
+      "balance after",
+      await provider.connection.getBalance(newUser.publicKey)
+    );
     console.log("Transaction: ", tx);
 
     const account_after = await program.account.auction.fetch(
@@ -106,21 +116,6 @@ describe("dutch_auction", () => {
 //       systemProgram: SystemProgram.programId, },
 //   },
 //   signers: []
-// );
-
-// MINT THINGS
-// const [mint, mintBump] = await anchor.web3.PublicKey.findProgramAddress(
-//   [],
-//   program.programId
-// );
-
-// console.log({ mint, mintBump });
-
-// let ourAssociatedTokens = await spl.Token.getAssociatedTokenAddress(
-//   spl.ASSOCIATED_TOKEN_PROGRAM_ID,
-//   spl.TOKEN_PROGRAM_ID,
-//   mint,
-//   program.provider.wallet.publicKey
 // );
 
 // await provider.connection.confirmTransaction(

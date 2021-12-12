@@ -5,18 +5,35 @@ use anchor_lang::prelude::*;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
-fn get_slope(start_price: u64, start_time: u64, reserve_price: Option<u64>, end_time: u64) -> u64 {
-    (reserve_price.or(Some(0)).unwrap() - start_price) / (end_time - start_time)
+const DECIMAL_MOVEMENT: f64 = 10_000_000_000_000.0;
+
+fn get_slope(start_price: i64, start_time: i64, reserve_price: Option<i64>, end_time: i64) -> i64 {
+    println!("end: {}, start: {}", end_time, start_time);
+    let top = reserve_price.or(Some(0)).unwrap() - start_price;
+    println!("top {}", top);
+    let bottom = end_time - start_time;
+    ((top as f64 / bottom as f64) * DECIMAL_MOVEMENT).round() as i64
 }
 
-fn get_y_intercept(start_price: u64, start_time: u64, slope: u64) -> u64 {
-    let res = slope as u128 * start_time as u128;
-    start_price - res as u64
+fn get_y_intercept(start_price: i64, start_time: i64, slope: i64) -> i64 {
+    let slopef64 = slope as f64 / DECIMAL_MOVEMENT;
+    let slope_start_time = slopef64 * start_time as f64;
+    println!("slope * start time: {}", slope_start_time);
+
+    ((start_price as f64 - slope_start_time) * DECIMAL_MOVEMENT).round() as i64
 }
 
-fn get_current_price(current_time: i64, slope: u64, y_intercept: u64) -> u64 {
-    let res = slope as u128 * current_time as u128;
-    res as u64 + y_intercept
+fn get_current_price_as_i64(current_time: i64, slope: i64, y_intercept: i64) -> i64 {
+    let slopef64 = slope as f64 / DECIMAL_MOVEMENT;
+    let y_interf64 = y_intercept as f64 / DECIMAL_MOVEMENT;
+    let res = slopef64 * current_time as f64;
+    println!("the res: {}", res);
+    ((res + y_interf64) * DECIMAL_MOVEMENT).round() as i64
+}
+
+fn get_lamports_from_sol(cur_sol: i64) -> u64 {
+    let cur_solf64 = cur_sol as f64 / DECIMAL_MOVEMENT;
+    (cur_solf64 * 1_000_000_000.0).round() as u64
 }
 
 #[program]
@@ -26,10 +43,10 @@ pub mod dutch_auction {
         ctx: Context<Create>,
         authority: Pubkey,
         // auction values
-        start_time: u64,
-        end_time: u64,
-        start_price: u64,
-        reserve_price: Option<u64>,
+        start_time: i64,
+        end_time: i64,
+        start_price: i64,
+        reserve_price: Option<i64>,
     ) -> ProgramResult {
         let auction = &mut ctx.accounts.auction;
         // auction values
@@ -49,10 +66,9 @@ pub mod dutch_auction {
     }
 
     pub fn claim(ctx: Context<Claim>) -> ProgramResult {
-        msg!("yo");
         // NOTES FOR PROD
         // - This is not proper escrow software
-        // - Currently the purchasing account is just paying to end the auction. They deserve a prize eventually.
+        // - Currently the purchasing account is just paying to end the auction. Transferring ownership of a some token or whatnot should be trivial.
 
         let auction = &mut ctx.accounts.auction;
         let authority = &mut ctx.accounts.authority;
@@ -66,22 +82,31 @@ pub mod dutch_auction {
             let current_timestamp = clock.unix_timestamp;
 
             // refuse transaction and end the auction if current time is past the end_time
-            if current_timestamp as u64 > auction.end_time {
+            if current_timestamp > auction.end_time {
                 auction.is_ended = true;
                 msg!("auction is ended");
                 Ok(())
             } else {
                 // attempt all fund transfers and then end the auction
-                let other_price =
-                    get_current_price(current_timestamp, auction.slope, auction.y_intercept);
+                let current_price_sol =
+                    get_current_price_as_i64(current_timestamp, auction.slope, auction.y_intercept);
 
-                let current_price = 1000;
+                let current_price_lamps = get_lamports_from_sol(current_price_sol);
 
-                msg!("price1: {}", other_price);
-                **purchaser.try_borrow_mut_lamports()? -= current_price;
-                msg!("price2: {}", other_price);
-                **authority.try_borrow_mut_lamports()? += current_price;
+                anchor_lang::solana_program::program::invoke(
+                    &anchor_lang::solana_program::system_instruction::transfer(
+                        purchaser.to_account_info().key,
+                        authority.to_account_info().key,
+                        current_price_lamps,
+                    ),
+                    &[
+                        purchaser.to_account_info(),
+                        authority.to_account_info(),
+                        ctx.accounts.system_program.to_account_info(),
+                    ],
+                )?;
 
+                //end the auction
                 auction.is_ended = true;
                 Ok(())
             }
@@ -106,20 +131,21 @@ pub struct Claim<'info> {
 
     #[account(mut)]
     pub purchaser: Signer<'info>,
+    pub system_program: Program<'info, System>,
 }
 
 #[account]
 pub struct Auction {
     pub authority: Pubkey,
     // timestamps (should be positive)
-    pub start_time: u64,
-    pub end_time: u64,
+    pub start_time: i64,
+    pub end_time: i64,
     // prices (should be positive)
-    pub start_price: u64,
-    pub reserve_price: Option<u64>,
+    pub start_price: i64,
+    pub reserve_price: Option<i64>,
     // math values (should only be positive)
-    pub slope: u64,
-    pub y_intercept: u64,
+    pub slope: i64,
+    pub y_intercept: i64,
     // other
     pub is_ended: bool,
 }
