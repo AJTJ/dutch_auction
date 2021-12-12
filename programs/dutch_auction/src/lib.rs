@@ -1,8 +1,5 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program;
-// use anchor_spl::token::accessor::authority;
-// use anchor_spl::associated_token::AssociatedToken;
-// use anchor_spl::token::{self, set_authority, Mint, SetAuthority, Token, TokenAccount, Transfer};
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
@@ -59,7 +56,7 @@ pub mod dutch_auction {
 
     pub fn claim(ctx: Context<Claim>) -> ProgramResult {
         // NOTES FOR PROD
-        // - This is not proper escrow software
+        // - This is not proper escrow software, and is probably currently unsafe
         // - Currently the purchasing account is just paying to end the auction. Transferring ownership of a some token or whatnot should be fairly trivial.
 
         let auction = &mut ctx.accounts.auction;
@@ -146,52 +143,3 @@ pub struct Auction {
     // other
     pub is_ended: bool,
 }
-
-// pub fn join(ctx: Context<Join>) -> Result<()> {
-//     let user_list = &ctx.accounts.airdrop.user_list;
-//     let max_users = ctx.accounts.airdrop.max_users;
-
-//     if user_list.len() == max_users as usize {
-//         return Err(ErrorCode::UserListFull.into());
-//     }
-
-//     let user = ctx.accounts.user.to_account_info();
-//     let from = &mut ctx.accounts.airdrop_owned_lamports.to_account_info();
-//     let airdrop = &mut ctx.accounts.airdrop.to_account_info();
-//     **from.try_borrow_mut_lamports()? -= 1_000_000_000;
-//     **airdrop.try_borrow_mut_lamports()? += 1_000_000_000;
-//     ctx.accounts.airdrop.user_list.push(user.key());
-//     Ok(())
-// }
-
-// const tempAcct = anchor.web3.Keypair.generate();
-
-//     const programId = new anchor.web3.PublicKey(program.idl.metadata.address);
-
-//     const transaction = new anchor.web3.Transaction().add(
-//       anchor.web3.SystemProgram.createAccount({
-//         fromPubkey: users[0].publicKey,
-//         lamports: 1 * LAMPORTS_PER_SOL,
-//         newAccountPubkey: tempAcct.publicKey,
-//         programId: programId,
-//         space: 256,
-//       })
-//     );
-
-//     const signature = await anchor.web3.sendAndConfirmTransaction(
-//       provider.connection,
-//       transaction,
-//       [users[0], tempAcct],
-//     );
-
-//     await program.rpc.join(
-//       {
-//         accounts: {
-//           user: users[0].publicKey,
-//           airdrop: airdrop.publicKey,
-//           airdropOwnedLamports: tempAcct.publicKey,
-//           systemProgram: anchor.web3.SystemProgram.programId,
-//         },
-//         signers: [],
-//       }
-//     );
