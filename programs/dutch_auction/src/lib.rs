@@ -24,7 +24,9 @@ fn get_y_intercept(start_price: i64, start_time: i64, slope_num: i64, slope_den:
 }
 
 fn get_current_price(current_time: i64, y_intercept: i64, slope_num: i64, slope_den: i64) -> u64 {
-    let slope_cur_time = (((slope_num as i128).checked_mul(start_time as i128).unwrap()) as i64)
+    let slope_cur_time = (((slope_num as i128)
+        .checked_mul(current_time as i128)
+        .unwrap()) as i64)
         .checked_div(slope_den)
         .unwrap();
     (slope_cur_time).checked_add(y_intercept).unwrap() as u64
