@@ -106,7 +106,7 @@ pub mod dutch_auction {
                 )?;
 
                 // transfer of goods should occur here
-                // TODO implement token and/or mint program to transfer goods
+                // transfer_authority on a token
 
                 //end the auction
                 auction.is_ended = true;
