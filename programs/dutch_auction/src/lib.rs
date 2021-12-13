@@ -111,7 +111,7 @@ pub mod dutch_auction {
 
                 anchor_spl::token::set_authority(
                     CpiContext::new(
-                        ctx.accounts.mint.to_account_info(),
+                        ctx.accounts.token_program.to_account_info(),
                         anchor_spl::token::SetAuthority {
                             current_authority: ctx.accounts.authority.to_account_info(),
                             account_or_mint: ctx.accounts.mint.to_account_info(),
@@ -156,8 +156,9 @@ pub struct Claim<'info> {
     #[account(mut)]
     pub auction: Account<'info, Auction>,
 
-    // #[account(mut)]
-    // pub token_program: Program<'info, Token>,
+    #[account(mut)]
+    pub token_program: Program<'info, Token>,
+
     #[account(mut)]
     pub mint: Account<'info, Mint>,
 

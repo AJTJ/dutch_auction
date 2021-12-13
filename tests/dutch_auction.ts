@@ -8,7 +8,6 @@ import * as spl from "@solana/spl-token";
 describe("dutch_auction", () => {
   const provider = anchor.Provider.env();
   anchor.setProvider(provider);
-  const providerWallet = provider.wallet;
   const program = anchor.workspace.DutchAuction as Program<DutchAuction>;
   const auction = anchor.web3.Keypair.generate();
   const owner = anchor.web3.Keypair.generate();
@@ -85,12 +84,12 @@ describe("dutch_auction", () => {
 
     let tx = await program.rpc.claim({
       accounts: {
-        mint: mint,
-        // token_program: spl.TOKEN_PROGRAM_ID,
         auction: auction.publicKey,
-        authority: providerWallet.publicKey,
-        purchaser: purchaser.publicKey,
+        authority: owner.publicKey,
         systemProgram: SystemProgram.programId,
+        mint: mint,
+        tokenProgram: spl.ASSOCIATED_TOKEN_PROGRAM_ID,
+        purchaser: purchaser.publicKey,
       },
       signers: [purchaser],
     });
