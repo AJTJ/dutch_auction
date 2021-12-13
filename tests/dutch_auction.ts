@@ -88,10 +88,10 @@ describe("dutch_auction", () => {
         authority: owner.publicKey,
         systemProgram: SystemProgram.programId,
         mint: mint,
-        tokenProgram: spl.ASSOCIATED_TOKEN_PROGRAM_ID,
+        tokenProgram: spl.TOKEN_PROGRAM_ID,
         purchaser: purchaser.publicKey,
       },
-      signers: [purchaser],
+      signers: [owner, purchaser],
     });
 
     let balance_after = await provider.connection.getBalance(
