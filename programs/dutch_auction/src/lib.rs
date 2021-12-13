@@ -50,7 +50,7 @@ pub mod dutch_auction {
     ) -> ProgramResult {
         let auction = &mut ctx.accounts.auction;
         // auction values
-        auction.authority = auction.authority; // you can read off the accout, don't need as an arg
+        auction.authority = ctx.accounts.authority.key(); // you can read off the accout, don't need as an arg
         auction.start_time = start_time;
         auction.end_time = end_time;
         auction.start_price = start_price;
