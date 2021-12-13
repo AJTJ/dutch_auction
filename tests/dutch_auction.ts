@@ -69,36 +69,36 @@ describe("dutch_auction", () => {
     console.log("Transaction: ", tx);
   });
 
-  // it("The price can be paid, ending the auction", async () => {
-  //   const account_before = await program.account.auction.fetch(
-  //     auction.publicKey
-  //   );
-  //   assert.ok(account_before.isEnded === false);
+  it("The price can be paid, ending the auction", async () => {
+    const account_before = await program.account.auction.fetch(
+      auction.publicKey
+    );
+    assert.ok(account_before.isEnded === false);
 
-  //   let balance_before = await provider.connection.getBalance(
-  //     purchaser.publicKey
-  //   );
+    let balance_before = await provider.connection.getBalance(
+      purchaser.publicKey
+    );
 
-  //   let tx = await program.rpc.claim({
-  //     accounts: {
-  //       auction: auction.publicKey,
-  //       authority: providerWallet.publicKey,
-  //       purchaser: purchaser.publicKey,
-  //       systemProgram: SystemProgram.programId,
-  //     },
-  //     signers: [purchaser],
-  //   });
+    let tx = await program.rpc.claim({
+      accounts: {
+        auction: auction.publicKey,
+        authority: providerWallet.publicKey,
+        purchaser: purchaser.publicKey,
+        systemProgram: SystemProgram.programId,
+      },
+      signers: [purchaser],
+    });
 
-  //   let balance_after = await provider.connection.getBalance(
-  //     purchaser.publicKey
-  //   );
-  //   const account_after = await program.account.auction.fetch(
-  //     auction.publicKey
-  //   );
-  //   assert.ok(account_after.isEnded === true);
+    let balance_after = await provider.connection.getBalance(
+      purchaser.publicKey
+    );
+    const account_after = await program.account.auction.fetch(
+      auction.publicKey
+    );
+    assert.ok(account_after.isEnded === true);
 
-  //   assert.ok(balance_before > balance_after);
+    assert.ok(balance_before > balance_after);
 
-  //   console.log("Transaction: ", tx);
-  // });
+    console.log("Transaction: ", tx);
+  });
 });
