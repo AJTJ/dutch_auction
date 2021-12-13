@@ -92,39 +92,44 @@ pub mod dutch_auction {
                     auction.slope_den,
                 );
 
-                // attempt to transfer all the funds
-                solana_program::program::invoke(
-                    &solana_program::system_instruction::transfer(
-                        purchaser.to_account_info().key,
-                        authority.to_account_info().key,
-                        current_price,
-                    ),
-                    &[
-                        purchaser.to_account_info(),
-                        authority.to_account_info(),
-                        ctx.accounts.system_program.to_account_info(),
-                    ],
-                )?;
+                if purchaser.to_account_info().lamports() < current_price {
+                    msg!("insufficent funds");
+                    Ok(())
+                } else {
+                    // attempt to transfer all the funds
+                    solana_program::program::invoke(
+                        &solana_program::system_instruction::transfer(
+                            purchaser.to_account_info().key,
+                            authority.to_account_info().key,
+                            current_price,
+                        ),
+                        &[
+                            purchaser.to_account_info(),
+                            authority.to_account_info(),
+                            ctx.accounts.system_program.to_account_info(),
+                        ],
+                    )?;
 
-                // transfer of any authority of whatever is purchased occurs here
-                // anchor_spl::token::set_authority(ctx, authority_type, new_authority)
+                    // transfer of any authority of whatever is purchased occurs here
+                    // anchor_spl::token::set_authority(ctx, authority_type, new_authority)
 
-                let cpi_accounts = anchor_spl::token::SetAuthority {
-                    account_or_mint: ctx.accounts.mint.to_account_info(),
-                    current_authority: authority.to_account_info(),
-                };
-                let cpi_program = ctx.accounts.token_program.to_account_info();
-                let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+                    let cpi_accounts = anchor_spl::token::SetAuthority {
+                        account_or_mint: ctx.accounts.mint.to_account_info(),
+                        current_authority: authority.to_account_info(),
+                    };
+                    let cpi_program = ctx.accounts.token_program.to_account_info();
+                    let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
 
-                anchor_spl::token::set_authority(
-                    cpi_ctx,
-                    spl_token::instruction::AuthorityType::AccountOwner,
-                    Some(*purchaser.to_account_info().key),
-                )?;
+                    anchor_spl::token::set_authority(
+                        cpi_ctx,
+                        spl_token::instruction::AuthorityType::MintTokens,
+                        Some(*purchaser.to_account_info().key),
+                    )?;
 
-                //end the auction
-                auction.is_ended = true;
-                Ok(())
+                    //end the auction
+                    auction.is_ended = true;
+                    Ok(())
+                }
             }
         }
     }
