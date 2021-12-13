@@ -68,8 +68,8 @@ pub mod dutch_auction {
         // - This is not proper escrow software, and is probably currently unsafe
 
         let auction = &mut ctx.accounts.auction;
-        let authority = &mut ctx.accounts.authority;
-        let purchaser = &mut ctx.accounts.purchaser;
+        let authority = &ctx.accounts.authority;
+        let purchaser = &ctx.accounts.purchaser;
 
         if auction.is_ended {
             msg!("auction is ended");
@@ -109,14 +109,15 @@ pub mod dutch_auction {
                 // transfer of any authority of whatever is purchased occurs here
                 // anchor_spl::token::set_authority(ctx, authority_type, new_authority)
 
+                let cpi_accounts = anchor_spl::token::SetAuthority {
+                    account_or_mint: ctx.accounts.mint.to_account_info(),
+                    current_authority: authority.to_account_info(),
+                };
+                let cpi_program = ctx.accounts.token_program.to_account_info();
+                let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+
                 anchor_spl::token::set_authority(
-                    CpiContext::new(
-                        ctx.accounts.token_program.to_account_info(),
-                        anchor_spl::token::SetAuthority {
-                            current_authority: ctx.accounts.authority.to_account_info(),
-                            account_or_mint: ctx.accounts.mint.to_account_info(),
-                        },
-                    ),
+                    cpi_ctx,
                     spl_token::instruction::AuthorityType::AccountOwner,
                     Some(*purchaser.to_account_info().key),
                 )?;
@@ -155,16 +156,11 @@ pub struct Initialize<'info> {
 pub struct Claim<'info> {
     #[account(mut)]
     pub auction: Account<'info, Auction>,
-
-    #[account(mut)]
     pub token_program: Program<'info, Token>,
-
     #[account(mut)]
     pub mint: Account<'info, Mint>,
-
     #[account(mut)]
-    pub authority: AccountInfo<'info>,
-
+    pub authority: Signer<'info>,
     #[account(mut)]
     pub purchaser: Signer<'info>,
     pub system_program: Program<'info, System>,
