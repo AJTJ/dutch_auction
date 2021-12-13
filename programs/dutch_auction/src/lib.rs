@@ -40,8 +40,8 @@ fn get_current_price(current_time: i64, y_intercept: i64, slope_num: i64, slope_
 pub mod dutch_auction {
     use super::*;
     pub fn initialize(
-        ctx: Context<Create>,
-        authority: Pubkey,
+        ctx: Context<Initialize>,
+        _mint_bump: u8,
         // auction values
         start_time: i64,
         end_time: i64,
@@ -50,7 +50,7 @@ pub mod dutch_auction {
     ) -> ProgramResult {
         let auction = &mut ctx.accounts.auction;
         // auction values
-        auction.authority = authority;
+        auction.authority = auction.authority; // you can read off the accout, don't need as an arg
         auction.start_time = start_time;
         auction.end_time = end_time;
         auction.start_price = start_price;
@@ -120,17 +120,22 @@ pub mod dutch_auction {
 }
 
 #[derive(Accounts)]
-pub struct Create<'info> {
+#[instruction(mint_bump: u8)]
+pub struct Initialize<'info> {
     #[account(init, payer = authority, space = 64 + 64)]
     pub auction: Account<'info, Auction>,
+    // has to be mut because it's the payer for `mint` and `auction`
+    #[account(mut)]
     pub authority: Signer<'info>,
     pub system_program: Program<'info, System>,
-
+    // You need to include `seeds` and `bump` arguments for PDA accts
     #[account(
         init,
         payer = authority,
         mint::decimals = 0,
-        mint::authority = authority
+        mint::authority = authority,
+        seeds = [b"mint".as_ref()],
+        bump = mint_bump,
     )]
     pub mint: Account<'info, Mint>,
     pub token_program: Program<'info, Token>,
