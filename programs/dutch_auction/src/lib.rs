@@ -1,9 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program;
-use anchor_spl::{
-    associated_token::AssociatedToken,
-    token::{Mint, Token, TokenAccount},
-};
+use anchor_spl::token::{Mint, Token};
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
@@ -110,6 +107,19 @@ pub mod dutch_auction {
                 )?;
 
                 // transfer of any authority of any mint/token etc can occur here
+                // anchor_spl::token::set_authority(ctx, authority_type, new_authority)
+
+                // anchor_spl::token::set_authority(
+                //     CpiContext::new(
+                //         ctx.accounts.token_program.to_account_info(),
+                //         anchor_spl::token::SetAuthority {
+                //             current_authority: ctx.accounts.authority.to_account_info(),
+                //             account_or_mint: ctx.accounts.mint.to_account_info(),
+                //         },
+                //     ),
+                //     spl_token::instruction::AuthorityType::AccountOwner,
+                //     Some(*purchaser.to_account_info().key),
+                // )?;
 
                 //end the auction
                 auction.is_ended = true;
@@ -145,6 +155,8 @@ pub struct Initialize<'info> {
 pub struct Claim<'info> {
     #[account(mut)]
     pub auction: Account<'info, Auction>,
+    pub token_program: Program<'info, Token>,
+    pub mint: Account<'info, Mint>,
 
     #[account(mut)]
     pub authority: AccountInfo<'info>,

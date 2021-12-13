@@ -97,6 +97,12 @@ describe("dutch_auction", () => {
     );
     assert.ok(account_after.isEnded === true);
 
+    console.log(
+      "balance before: ",
+      balance_before,
+      "- balance after: ",
+      balance_after
+    );
     assert.ok(balance_before > balance_after);
 
     console.log("Transaction: ", tx);
