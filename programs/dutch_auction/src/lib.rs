@@ -1,9 +1,5 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program;
-use anchor_spl::{
-    associated_token::AssociatedToken,
-    token::{Mint, Token, TokenAccount},
-};
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
@@ -109,8 +105,7 @@ pub mod dutch_auction {
                     ],
                 )?;
 
-                // transfer of goods should occur here
-                // transfer_authority on a token
+                // transfer of any authority of any mint/token etc can occur here
 
                 //end the auction
                 auction.is_ended = true;
@@ -121,22 +116,11 @@ pub mod dutch_auction {
 }
 
 #[derive(Accounts)]
-#[instruction(mint_bump: u8)]
 pub struct Create<'info> {
     #[account(init, payer = user, space = 64 + 64)]
     pub auction: Account<'info, Auction>,
-
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
-    #[account(
-        init,
-        payer = user,
-        mint::decimals = 0,
-        mint::authority = user
-    )]
-    pub mint: Account<'info, Mint>,
-    pub token_program: Program<'info, Token>,
-    pub rent: Sysvar<'info, Rent>,
 }
 #[derive(Accounts)]
 pub struct Claim<'info> {

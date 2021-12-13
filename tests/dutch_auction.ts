@@ -1,10 +1,7 @@
 import * as anchor from "@project-serum/anchor";
-import * as spl from "@solana/spl-token";
 import { Program } from "@project-serum/anchor";
-import serumCmn from "@project-serum/common";
 import { DutchAuction } from "../target/types/dutch_auction";
-import { publicKey } from "@project-serum/anchor/dist/cjs/utils";
-const { SystemProgram, PublicKey } = anchor.web3;
+const { SystemProgram } = anchor.web3;
 import assert from "assert";
 
 describe("dutch_auction", () => {
@@ -25,11 +22,6 @@ describe("dutch_auction", () => {
   });
 
   it("It initializes the account and creates an auction!", async () => {
-    const [mint, mintBump] = await anchor.web3.PublicKey.findProgramAddress(
-      [],
-      program.programId
-    );
-
     // Dec 12th, 2021
     let start_time = new anchor.BN(1639341245);
     // January first, 2022
@@ -47,12 +39,9 @@ describe("dutch_auction", () => {
       reserve_price,
       {
         accounts: {
-          mint: mint,
           auction: auction.publicKey,
           user: providerWallet.publicKey,
           systemProgram: SystemProgram.programId,
-          tokenProgram: spl.TOKEN_PROGRAM_ID,
-          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         },
         signers: [auction],
       }
