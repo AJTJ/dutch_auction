@@ -48,6 +48,7 @@ describe("dutch_auction", () => {
       [Buffer.from("mint")],
       program.programId
     );
+
     // Dec 12th, 2021
     let start_time = new anchor.BN(1639341245);
     // January first, 2022

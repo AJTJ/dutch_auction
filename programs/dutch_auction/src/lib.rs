@@ -144,6 +144,7 @@ pub struct Initialize<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
     pub system_program: Program<'info, System>,
+
     // You need to include `seeds` and `bump` arguments for PDA accts
     #[account(
         init,
