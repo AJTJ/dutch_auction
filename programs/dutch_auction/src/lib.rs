@@ -106,20 +106,20 @@ pub mod dutch_auction {
                     ],
                 )?;
 
-                // transfer of any authority of any mint/token etc can occur here
+                // transfer of any authority of whatever is purchased occurs here
                 // anchor_spl::token::set_authority(ctx, authority_type, new_authority)
 
-                // anchor_spl::token::set_authority(
-                //     CpiContext::new(
-                //         ctx.accounts.token_program.to_account_info(),
-                //         anchor_spl::token::SetAuthority {
-                //             current_authority: ctx.accounts.authority.to_account_info(),
-                //             account_or_mint: ctx.accounts.mint.to_account_info(),
-                //         },
-                //     ),
-                //     spl_token::instruction::AuthorityType::AccountOwner,
-                //     Some(*purchaser.to_account_info().key),
-                // )?;
+                anchor_spl::token::set_authority(
+                    CpiContext::new(
+                        ctx.accounts.mint.to_account_info(),
+                        anchor_spl::token::SetAuthority {
+                            current_authority: ctx.accounts.authority.to_account_info(),
+                            account_or_mint: ctx.accounts.mint.to_account_info(),
+                        },
+                    ),
+                    spl_token::instruction::AuthorityType::AccountOwner,
+                    Some(*purchaser.to_account_info().key),
+                )?;
 
                 //end the auction
                 auction.is_ended = true;
@@ -155,7 +155,10 @@ pub struct Initialize<'info> {
 pub struct Claim<'info> {
     #[account(mut)]
     pub auction: Account<'info, Auction>,
-    pub token_program: Program<'info, Token>,
+
+    // #[account(mut)]
+    // pub token_program: Program<'info, Token>,
+    #[account(mut)]
     pub mint: Account<'info, Mint>,
 
     #[account(mut)]

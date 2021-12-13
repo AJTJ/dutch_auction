@@ -70,6 +70,10 @@ describe("dutch_auction", () => {
   });
 
   it("The price can be paid, ending the auction", async () => {
+    const [mint, mintBump] = await anchor.web3.PublicKey.findProgramAddress(
+      [Buffer.from("mint")],
+      program.programId
+    );
     const account_before = await program.account.auction.fetch(
       auction.publicKey
     );
@@ -81,6 +85,8 @@ describe("dutch_auction", () => {
 
     let tx = await program.rpc.claim({
       accounts: {
+        mint: mint,
+        // token_program: spl.TOKEN_PROGRAM_ID,
         auction: auction.publicKey,
         authority: providerWallet.publicKey,
         purchaser: purchaser.publicKey,
