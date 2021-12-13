@@ -11,12 +11,12 @@ describe("dutch_auction", () => {
   const providerWallet = provider.wallet;
   const program = anchor.workspace.DutchAuction as Program<DutchAuction>;
   const auction = anchor.web3.Keypair.generate();
-  const newUser = anchor.web3.Keypair.generate();
+  const purchaser = anchor.web3.Keypair.generate();
 
   // fill the account with lamps
   before(async () => {
     const signature = await program.provider.connection.requestAirdrop(
-      newUser.publicKey,
+      purchaser.publicKey,
       1000000000000
     );
     await program.provider.connection.confirmTransaction(signature);
@@ -65,20 +65,22 @@ describe("dutch_auction", () => {
     assert.ok(account_before.isEnded === false);
 
     let balance_before = await provider.connection.getBalance(
-      newUser.publicKey
+      purchaser.publicKey
     );
 
     let tx = await program.rpc.claim({
       accounts: {
         auction: auction.publicKey,
         authority: providerWallet.publicKey,
-        purchaser: newUser.publicKey,
+        purchaser: purchaser.publicKey,
         systemProgram: SystemProgram.programId,
       },
-      signers: [newUser],
+      signers: [purchaser],
     });
 
-    let balance_after = await provider.connection.getBalance(newUser.publicKey);
+    let balance_after = await provider.connection.getBalance(
+      purchaser.publicKey
+    );
     const account_after = await program.account.auction.fetch(
       auction.publicKey
     );
