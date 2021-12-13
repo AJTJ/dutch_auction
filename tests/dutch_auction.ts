@@ -11,7 +11,17 @@ describe("dutch_auction", () => {
   const providerWallet = provider.wallet;
   const program = anchor.workspace.DutchAuction as Program<DutchAuction>;
   const auction = anchor.web3.Keypair.generate();
+  const owner = anchor.web3.Keypair.generate();
   const purchaser = anchor.web3.Keypair.generate();
+
+  // fill the account with lamps
+  before(async () => {
+    const signature = await program.provider.connection.requestAirdrop(
+      owner.publicKey,
+      1000000000000
+    );
+    await program.provider.connection.confirmTransaction(signature);
+  });
 
   // fill the account with lamps
   before(async () => {
@@ -46,12 +56,12 @@ describe("dutch_auction", () => {
         accounts: {
           mint: mint,
           auction: auction.publicKey,
-          user: providerWallet.publicKey,
+          authority: owner.publicKey,
           systemProgram: SystemProgram.programId,
           tokenProgram: spl.TOKEN_PROGRAM_ID,
           rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         },
-        signers: [auction],
+        signers: [owner],
       }
     );
 

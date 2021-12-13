@@ -121,16 +121,16 @@ pub mod dutch_auction {
 
 #[derive(Accounts)]
 pub struct Create<'info> {
-    #[account(init, payer = user, space = 64 + 64)]
+    #[account(init, payer = authority, space = 64 + 64)]
     pub auction: Account<'info, Auction>,
-    pub user: Signer<'info>,
+    pub authority: Signer<'info>,
     pub system_program: Program<'info, System>,
 
     #[account(
         init,
-        payer = user,
+        payer = authority,
         mint::decimals = 0,
-        mint::authority = user
+        mint::authority = authority
     )]
     pub mint: Account<'info, Mint>,
     pub token_program: Program<'info, Token>,
