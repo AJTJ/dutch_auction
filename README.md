@@ -1,3 +1,6 @@
+# THIS IS THE EXPERIMENTAL REPO
+# GO TO https://github.com/AJTJ/auction for a more refined REPO
+
 ### description
 A dutch auction program on the solana blockchain
 
